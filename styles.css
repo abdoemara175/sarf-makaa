@@ -2872,3 +2872,34 @@ section:not(.hero-section) {
     object-fit: cover;
     object-position: center;
 }
+
+/* Final mobile floating phone button: always a true circle */
+@media (max-width: 768px) {
+    .floating-actions .float-phone,
+    .floating-actions .float-whatsapp {
+        flex: 0 0 48px !important;
+        width: 48px !important;
+        min-width: 48px !important;
+        max-width: 48px !important;
+        height: 48px !important;
+        min-height: 48px !important;
+        max-height: 48px !important;
+        aspect-ratio: 1 / 1 !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        line-height: 1 !important;
+    }
+}
+
+@media (max-width: 380px) {
+    .floating-actions .float-phone,
+    .floating-actions .float-whatsapp {
+        flex-basis: 46px !important;
+        width: 46px !important;
+        min-width: 46px !important;
+        max-width: 46px !important;
+        height: 46px !important;
+        min-height: 46px !important;
+        max-height: 46px !important;
+    }
+}
