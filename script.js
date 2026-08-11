@@ -72,34 +72,30 @@ document.addEventListener('DOMContentLoaded', () => {
         revealElements.forEach(element => element.classList.add('reveal-active'));
     }
 
-    // Animated counters: start on load so the values never remain at +0/0%.
+    // Animated counters: write final values immediately so +0/0% never remains visible.
     const counterElements = $$('.counter');
-    let countersStarted = false;
     const startCounters = () => {
-        if (countersStarted) return;
-        countersStarted = true;
         counterElements.forEach(counter => {
             const target = Number(counter.dataset.target);
             if (!Number.isFinite(target)) return;
             const original = counter.textContent || '';
             const isPercentage = original.includes('%');
             const isPlus = original.includes('+');
+            const format = value => `${isPlus ? '+' : ''}${value}${isPercentage ? '%' : ''}`;
+            counter.textContent = format(target);
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
             const start = performance.now();
             const duration = 900;
             const render = now => {
                 const progress = Math.min((now - start) / duration, 1);
                 const value = Math.ceil(target * (1 - Math.pow(1 - progress, 3)));
-                counter.textContent = `${isPlus ? '+' : ''}${value}${isPercentage ? '%' : ''}`;
+                counter.textContent = format(value);
                 if (progress < 1) requestAnimationFrame(render);
             };
             requestAnimationFrame(render);
         });
     };
-    // Do not depend on a partial hero-stats intersection: different viewport
-    // heights otherwise leave the counters at their HTML fallback values.
-    if (counterElements.length) {
-        requestAnimationFrame(startCounters);
-    }
+    if (counterElements.length) startCounters();
 
     // Portfolio filtering; cancel stale timers so rapid taps never leave hidden cards visible.
     const filterBtns = $$('.filter-btn');
