@@ -2238,3 +2238,67 @@ img {
 }
 
 
+
+
+/* Final responsive polish */
+:root { --bg-section-light: #1e293b; --header-height: 76px; }
+html, body { width: 100%; max-width: 100%; overflow-x: clip; }
+body.menu-open, body.modal-open { overflow: hidden; }
+button, input, textarea, select { max-width: 100%; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid rgba(94,234,212,.8); outline-offset: 3px; }
+.navbar { min-height: var(--header-height); padding-top: max(.55rem, env(safe-area-inset-top)); padding-bottom: .55rem; }
+.nav-container { width: min(100%, 1320px); min-width: 0; }
+.brand, .nav-actions, .nav-menu, .nav-list, .brand-text { min-width: 0; }
+.brand-title, .brand-sub { overflow: hidden; text-overflow: ellipsis; }
+.mobile-toggle { width: 44px; height: 44px; flex: 0 0 44px; align-items: center; justify-content: center; border-radius: 12px; transition: background-color var(--transition-fast), color var(--transition-fast), transform .16s ease-out; }
+.mobile-toggle:hover, .mobile-toggle:active { background: rgba(45,212,191,.15); color: var(--brand-cyan); }
+.mobile-toggle:active, .btn:active, .filter-btn:active, .float-btn:active { transform: scale(.97); }
+.hero-section { min-width: 0; padding-top: calc(var(--header-height) + 3.5rem); }
+.hero-container, .contact-wrapper, .footer-container, .services-grid, .portfolio-grid, .districts-grid, .info-cards, .features-grid, .reviews-grid { min-width: 0; }
+.hero-container > *, .contact-wrapper > *, .footer-container > *, .services-grid > *, .portfolio-grid > *, .districts-grid > *, .info-cards > *, .features-grid > *, .reviews-grid > * { min-width: 0; }
+.hero-title, .section-title, .card-title, .faq-question, .footer-contact p, .footer-links a { overflow-wrap: anywhere; }
+.hero-img, .portfolio-item img, .service-card img, .review-card img { max-width: 100%; }
+.faq-question { min-height: 68px; text-align: right; }
+.faq-question span, .faq-question strong { min-width: 0; flex: 1; }
+.faq-answer { overflow-wrap: anywhere; }
+.form-row-2col { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.form-group input, .form-group textarea, .form-group select, .form-select { min-width: 0; }
+.floating-actions { left: auto; right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, env(safe-area-inset-bottom)); }
+.float-tooltip { left: auto; right: 70px; }
+.toast { width: min(calc(100% - 2rem), 540px); text-align: center; justify-content: center; }
+@media (max-width: 992px) { .nav-list { gap: 1.25rem; } .hero-container { gap: 2rem; } }
+@media (max-width: 768px) {
+  .nav-container { padding-inline: .85rem; }
+  .nav-menu { top: 0; right: 0; bottom: 0; width: min(84vw, 320px); max-width: 100%; padding: calc(var(--header-height) + 1.25rem) 1.25rem 2rem; transform: translateX(110%); transition: transform .26s cubic-bezier(.23,1,.32,1); overflow-y: auto; overscroll-behavior: contain; }
+  .nav-menu.active { right: 0; transform: translateX(0); }
+  .nav-list { align-items: stretch; gap: .35rem; }
+  .nav-link { display: block; padding: .85rem 1rem; border-radius: 10px; }
+  .nav-link:hover, .nav-link.active { background: rgba(45,212,191,.1); }
+  .nav-link::after { display: none; }
+  .hero-section { padding-top: calc(var(--header-height) + 2.5rem); }
+  .hero-title { font-size: clamp(1.65rem, 6vw, 2.2rem); }
+  .hero-subtitle { font-size: 1rem; }
+  .form-row-2col { grid-template-columns: 1fr; }
+}
+@media (max-width: 576px) {
+  .container { padding-inline: .85rem; }
+  .navbar .brand { gap: .5rem; }
+  .brand-icon { width: 40px; height: 40px; font-size: 1.2rem; }
+  .brand-title { font-size: .9rem; }
+  .brand-sub { font-size: .68rem; }
+  .nav-actions { gap: .35rem; }
+  .hero-section { padding-bottom: 3rem; }
+  .hero-stats { width: 100%; }
+  .faq-accordion { margin-top: 1.75rem; gap: .75rem; }
+  .faq-question { min-height: 62px; padding: 1rem; font-size: .95rem; }
+  .faq-answer { padding-inline: 1rem !important; }
+  .lightbox-modal { padding: .75rem; }
+  .lightbox-caption { padding: .8rem 1rem; font-size: .95rem; }
+  .float-tooltip { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .ambient-glow, .glow-pulse, .pulse-glow { animation: none; } }
+
+
+/* Portfolio filter transition state */
+.portfolio-item { transition: opacity .24s ease, transform .24s ease, visibility .24s ease; }
+.portfolio-item.is-filtered-out { opacity: 0; transform: scale(.96); pointer-events: none; }

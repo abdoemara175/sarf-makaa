@@ -1,389 +1,287 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Mobile Menu Drawer Toggle
-    const mobileToggle = document.getElementById('mobileToggle');
-    const navMenu = document.getElementById('navMenu');
-    const mobileOverlay = document.getElementById('mobileOverlay');
+    'use strict';
 
-    function toggleMenu() {
-        navMenu.classList.toggle('active');
-        mobileOverlay.classList.toggle('active');
-        const isOpen = navMenu.classList.contains('active');
-        mobileToggle.innerHTML = isOpen ? '<i class="fa-solid fa-xmark"></i>' : '<i class="fa-solid fa-bars"></i>';
-    }
+    const $ = (selector, parent = document) => parent.querySelector(selector);
+    const $$ = (selector, parent = document) => [...parent.querySelectorAll(selector)];
 
-    if (mobileToggle) mobileToggle.addEventListener('click', toggleMenu);
-    if (mobileOverlay) mobileOverlay.addEventListener('click', toggleMenu);
+    // Mobile navigation: one source of truth for open/close state.
+    const mobileToggle = $('#mobileToggle');
+    const navMenu = $('#navMenu');
+    const mobileOverlay = $('#mobileOverlay');
+    const navLinks = $$('.nav-link');
 
-    const navLinks = document.querySelectorAll('.nav-link');
-    navLinks.forEach(link => {
-        link.addEventListener('click', () => {
-            if (navMenu.classList.contains('active')) {
-                toggleMenu();
-            }
-        });
-    });
-
-    // 1.5 Scroll-Spy Active Menu Highlight for 5 Master Sections
-    const masterSectionIds = ['home', 'services', 'portfolio', 'reviews', 'contact'];
-    function scrollSpy() {
-        const currentScrollY = window.pageYOffset + 140;
-        let activeId = 'home';
-
-        masterSectionIds.forEach(id => {
-            const section = document.getElementById(id);
-            if (section) {
-                const sectionTop = section.offsetTop;
-                const sectionHeight = section.offsetHeight;
-                if (currentScrollY >= sectionTop && currentScrollY < sectionTop + sectionHeight) {
-                    activeId = id;
-                }
-            }
-        });
-
-        navLinks.forEach(link => {
-            link.classList.remove('active');
-            if (link.getAttribute('href') === `#${activeId}`) {
-                link.classList.add('active');
-            }
-        });
-    }
-    window.addEventListener('scroll', scrollSpy);
-    scrollSpy();
-
-    // 2. IntersectionObserver Scroll Reveal Animations (css-animation-creator)
-    const revealElements = document.querySelectorAll('.reveal-fade-up, .reveal-fade-left, .reveal-fade-right, .reveal-scale-up');
-    
-    const observerOptions = {
-        threshold: 0.15,
-        rootMargin: '0px 0px -50px 0px'
+    const setMenuState = (open) => {
+        if (!navMenu || !mobileOverlay || !mobileToggle) return;
+        navMenu.classList.toggle('active', open);
+        mobileOverlay.classList.toggle('active', open);
+        document.body.classList.toggle('menu-open', open);
+        mobileToggle.setAttribute('aria-expanded', String(open));
+        mobileToggle.setAttribute('aria-label', open ? 'إغلاق القائمة' : 'فتح القائمة');
+        mobileToggle.innerHTML = open
+            ? '<i class="fa-solid fa-xmark" aria-hidden="true"></i>'
+            : '<i class="fa-solid fa-bars" aria-hidden="true"></i>';
     };
 
-    const revealObserver = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('reveal-active');
-                observer.unobserve(entry.target);
-            }
+    mobileToggle?.addEventListener('click', () => {
+        setMenuState(!navMenu?.classList.contains('active'));
+    });
+    mobileOverlay?.addEventListener('click', () => setMenuState(false));
+    navLinks.forEach(link => link.addEventListener('click', () => setMenuState(false)));
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            setMenuState(false);
+            closeLightbox();
+        }
+    });
+
+    // Scroll spy is throttled with requestAnimationFrame to avoid excess layout work.
+    const masterSectionIds = ['home', 'services', 'portfolio', 'reviews', 'contact'];
+    let spyFrame = 0;
+    const scrollSpy = () => {
+        if (spyFrame) return;
+        spyFrame = requestAnimationFrame(() => {
+            spyFrame = 0;
+            const marker = window.scrollY + 140;
+            let activeId = 'home';
+            masterSectionIds.forEach(id => {
+                const section = document.getElementById(id);
+                if (section && marker >= section.offsetTop && marker < section.offsetTop + section.offsetHeight) activeId = id;
+            });
+            navLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === `#${activeId}`));
         });
-    }, observerOptions);
+    };
+    window.addEventListener('scroll', scrollSpy, { passive: true });
+    window.addEventListener('resize', scrollSpy, { passive: true });
+    scrollSpy();
 
-    revealElements.forEach(el => revealObserver.observe(el));
+    // Reveal-on-scroll with reduced-motion support.
+    const revealElements = $$('.reveal-fade-up, .reveal-fade-left, .reveal-fade-right, .reveal-scale-up');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        revealElements.forEach(element => element.classList.add('reveal-active'));
+    } else if ('IntersectionObserver' in window) {
+        const revealObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('reveal-active');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+        revealElements.forEach(element => revealObserver.observe(element));
+    } else {
+        revealElements.forEach(element => element.classList.add('reveal-active'));
+    }
 
-    // 3. Animated Number Counters
-    const counterElements = document.querySelectorAll('.counter');
+    // Animated counters.
+    const counterElements = $$('.counter');
     let countersStarted = false;
-
-    function startCounters() {
+    const startCounters = () => {
         if (countersStarted) return;
-        counterElements.forEach(counter => {
-            const target = +counter.getAttribute('data-target');
-            const isPercentage = counter.textContent.includes('%');
-            const isPlus = counter.textContent.includes('+');
-            let count = 0;
-            const speed = target / 50;
-
-            const updateCount = () => {
-                count += speed;
-                if (count < target) {
-                    counter.innerText = `${isPlus ? '+' : ''}${Math.ceil(count)}${isPercentage ? '%' : ''}`;
-                    setTimeout(updateCount, 25);
-                } else {
-                    counter.innerText = `${isPlus ? '+' : ''}${target}${isPercentage ? '%' : ''}`;
-                }
-            };
-            updateCount();
-        });
         countersStarted = true;
-    }
+        counterElements.forEach(counter => {
+            const target = Number(counter.dataset.target);
+            if (!Number.isFinite(target)) return;
+            const original = counter.textContent || '';
+            const isPercentage = original.includes('%');
+            const isPlus = original.includes('+');
+            const start = performance.now();
+            const duration = 900;
+            const render = now => {
+                const progress = Math.min((now - start) / duration, 1);
+                const value = Math.ceil(target * (1 - Math.pow(1 - progress, 3)));
+                counter.textContent = `${isPlus ? '+' : ''}${value}${isPercentage ? '%' : ''}`;
+                if (progress < 1) requestAnimationFrame(render);
+            };
+            requestAnimationFrame(render);
+        });
+    };
+    const heroStats = $('.hero-stats');
+    if (heroStats && 'IntersectionObserver' in window) {
+        new IntersectionObserver(entries => {
+            if (entries[0]?.isIntersecting) startCounters();
+        }, { threshold: 0.35, once: true }).observe(heroStats);
+    } else if (heroStats) startCounters();
 
-    const heroStats = document.querySelector('.hero-stats');
-    if (heroStats) {
-        const statsObserver = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting) {
-                startCounters();
-            }
-        }, { threshold: 0.5 });
-        statsObserver.observe(heroStats);
-    }
-
-    // 4. Portfolio Category Filtering
-    const filterBtns = document.querySelectorAll('.filter-btn');
-    const portfolioItems = document.querySelectorAll('.portfolio-item');
-
-    filterBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            filterBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-
-            const filterValue = btn.getAttribute('data-filter');
-
+    // Portfolio filtering; cancel stale timers so rapid taps never leave hidden cards visible.
+    const filterBtns = $$('.filter-btn');
+    const portfolioItems = $$('.portfolio-item');
+    let filterTimer;
+    filterBtns.forEach(button => button.addEventListener('click', () => {
+        filterBtns.forEach(item => item.classList.toggle('active', item === button));
+        const filter = button.dataset.filter || 'all';
+        clearTimeout(filterTimer);
+        portfolioItems.forEach(item => {
+            const visible = filter === 'all' || item.dataset.category === filter;
+            item.classList.toggle('is-filtered-out', !visible);
+            if (visible) item.style.removeProperty('display');
+        });
+        filterTimer = setTimeout(() => {
             portfolioItems.forEach(item => {
-                const category = item.getAttribute('data-category');
-                if (filterValue === 'all' || category === filterValue) {
-                    item.style.display = 'block';
-                    setTimeout(() => {
-                        item.style.opacity = '1';
-                        item.style.transform = 'scale(1)';
-                    }, 50);
-                } else {
-                    item.style.opacity = '0';
-                    item.style.transform = 'scale(0.8)';
-                    setTimeout(() => {
-                        item.style.display = 'none';
-                    }, 300);
-                }
+                if (item.classList.contains('is-filtered-out')) item.style.display = 'none';
             });
-        });
+        }, 260);
+    }));
+
+    // Before/after comparison slider.
+    const baRangeInput = $('#baRangeInput');
+    const baAfterLayer = $('#baAfterLayer');
+    const baHandle = $('#baHandle');
+    const updateBeforeAfter = value => {
+        const numericValue = Math.max(0, Math.min(100, Number(value) || 50));
+        if (baAfterLayer) baAfterLayer.style.clipPath = `inset(0 0 0 ${numericValue}%)`;
+        if (baHandle) baHandle.style.left = `${numericValue}%`;
+    };
+    baRangeInput?.addEventListener('input', event => updateBeforeAfter(event.target.value));
+    if (baRangeInput) updateBeforeAfter(baRangeInput.value || 50);
+
+    // Lightbox.
+    const lightboxModal = $('#lightboxModal');
+    const lightboxImg = $('#lightboxImg');
+    const lightboxCaption = $('#lightboxCaption');
+    const lightboxClose = $('#lightboxClose');
+    const closeLightbox = () => {
+        if (!lightboxModal) return;
+        lightboxModal.classList.remove('active');
+        document.body.classList.remove('modal-open');
+        lightboxImg?.removeAttribute('src');
+    };
+    $$('.btn-zoom-img').forEach(button => button.addEventListener('click', () => {
+        if (!lightboxModal || !lightboxImg) return;
+        lightboxImg.src = button.dataset.img || '';
+        lightboxImg.alt = button.dataset.title || 'صورة من أعمالنا';
+        if (lightboxCaption) lightboxCaption.textContent = button.dataset.title || '';
+        lightboxModal.classList.add('active');
+        document.body.classList.add('modal-open');
+    }));
+    lightboxClose?.addEventListener('click', closeLightbox);
+    lightboxModal?.addEventListener('click', event => {
+        if (event.target === lightboxModal) closeLightbox();
     });
 
-    // 5. Before & After Slider Logic
-    const baRangeInput = document.getElementById('baRangeInput');
-    const baAfterLayer = document.getElementById('baAfterLayer');
-    const baHandle = document.getElementById('baHandle');
-
-    if (baRangeInput && baAfterLayer && baHandle) {
-        function updateBeforeAfterSlider(val) {
-            baAfterLayer.style.clipPath = `inset(0 0 0 ${val}%)`;
-            baHandle.style.left = `${val}%`;
-        }
-
-        baRangeInput.addEventListener('input', (e) => {
-            updateBeforeAfterSlider(e.target.value);
-        });
-
-        baRangeInput.addEventListener('change', (e) => {
-            updateBeforeAfterSlider(e.target.value);
-        });
-
-        // Initialize at 50%
-        updateBeforeAfterSlider(baRangeInput.value || 50);
-    }
-
-    // 6. Lightbox Modal Image Zoom
-    const zoomButtons = document.querySelectorAll('.btn-zoom-img');
-    const lightboxModal = document.getElementById('lightboxModal');
-    const lightboxImg = document.getElementById('lightboxImg');
-    const lightboxCaption = document.getElementById('lightboxCaption');
-    const lightboxClose = document.getElementById('lightboxClose');
-
-    zoomButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const imgSrc = btn.getAttribute('data-img');
-            const imgTitle = btn.getAttribute('data-title');
-            lightboxImg.src = imgSrc;
-            lightboxCaption.textContent = imgTitle;
-            lightboxModal.classList.add('active');
-        });
-    });
-
-    if (lightboxClose) {
-        lightboxClose.addEventListener('click', () => {
-            lightboxModal.classList.remove('active');
-        });
-    }
-
-    if (lightboxModal) {
-        lightboxModal.addEventListener('click', (e) => {
-            if (e.target === lightboxModal) {
-                lightboxModal.classList.remove('active');
-            }
-        });
-    }
-
-    // 7. Contact Form & Geolocation GPS to WhatsApp Dispatch
-    const contactForm = document.getElementById('contactForm');
-    const getLocationBtn = document.getElementById('getLocationBtn');
-    const locationStatus = document.getElementById('locationStatus');
-    const locationUrlInput = document.getElementById('locationUrlInput');
-    const toast = document.getElementById('toastNotification');
-    const toastMessage = document.getElementById('toastMessage');
-
-    function showToast(message, duration = 4000) {
+    // Toast helper with a single replaceable timer.
+    const toast = $('#toastNotification');
+    const toastMessage = $('#toastMessage');
+    let toastTimer;
+    const showToast = (message, duration = 4000) => {
+        if (!toast) return;
         if (toastMessage) toastMessage.textContent = message;
-        if (toast) {
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, duration);
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
+    };
+
+    // GPS capture.
+    const getLocationBtn = $('#getLocationBtn');
+    const locationStatus = $('#locationStatus');
+    const locationUrlInput = $('#locationUrlInput');
+    getLocationBtn?.addEventListener('click', () => {
+        if (!navigator.geolocation) {
+            if (locationStatus) locationStatus.textContent = 'خدمة GPS غير مدعومة في متصفحك. اختر الحي من القائمة.';
+            return;
         }
-    }
+        const originalHtml = getLocationBtn.innerHTML;
+        getLocationBtn.disabled = true;
+        getLocationBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>جاري تحديد موقعك...</span>';
+        if (locationStatus) locationStatus.textContent = 'يرجى السماح للمتصفح بتحديد موقعك الجغرافي...';
+        navigator.geolocation.getCurrentPosition(position => {
+            const { latitude, longitude } = position.coords;
+            const mapsUrl = `https://maps.google.com/?q=${latitude},${longitude}`;
+            if (locationUrlInput) locationUrlInput.value = mapsUrl;
+            getLocationBtn.disabled = false;
+            getLocationBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> <span>تم التقاط الموقع بنجاح</span>';
+            if (locationStatus) locationStatus.innerHTML = `<strong>تم تحديد موقعك:</strong> <a href="${mapsUrl}" target="_blank" rel="noopener">عرض على الخريطة</a>`;
+            showToast('تم التقاط موقعك الجغرافي بنجاح');
+        }, () => {
+            getLocationBtn.disabled = false;
+            getLocationBtn.innerHTML = originalHtml;
+            if (locationStatus) locationStatus.textContent = 'تعذر تحديد الموقع تلقائيًا. اختر الحي من القائمة.';
+            showToast('تعذر تحديد الموقع تلقائيًا');
+        }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+    });
 
-    // Geolocation GPS Capture
-    if (getLocationBtn) {
-        getLocationBtn.addEventListener('click', () => {
-            if (!navigator.geolocation) {
-                if (locationStatus) {
-                    locationStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color: #f59e0b;"></i> خدمة GPS غير مدعومة في متصفحك. اختر حيك من القائمة.';
-                }
-                return;
-            }
-
-            const originalBtnHtml = getLocationBtn.innerHTML;
-            getLocationBtn.disabled = true;
-            getLocationBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>جاري تحديد موقعك الجغرافي...</span>';
-            
-            if (locationStatus) {
-                locationStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> يرجى إعطاء الإذن للمتصفح لتحديد موقعك الجغرافي...';
-            }
-
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    const mapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
-                    
-                    if (locationUrlInput) locationUrlInput.value = mapsUrl;
-                    
-                    getLocationBtn.disabled = false;
-                    getLocationBtn.innerHTML = '<i class="fa-solid fa-circle-check" style="color: #25D366;"></i> <span>تم التقاط الموقع بنجاح!</span>';
-                    getLocationBtn.style.borderColor = '#25D366';
-                    
-                    if (locationStatus) {
-                        locationStatus.innerHTML = `<i class="fa-solid fa-location-dot" style="color: #25D366;"></i> <strong>تم تحديد موقعك:</strong> <a href="${mapsUrl}" target="_blank" style="color: #2dd4bf; text-decoration: underline;">عرض على الخريطة</a>`;
-                    }
-                    showToast('تم التقاط موقعك الجغرافي بنجاح! 📍');
-                },
-                (error) => {
-                    getLocationBtn.disabled = false;
-                    getLocationBtn.innerHTML = originalBtnHtml;
-                    if (locationStatus) {
-                        locationStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i> تعذر تحديد الموقع تلقائياً. يرجى اختيار حيك في القائمة.';
-                    }
-                },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
-        });
-    }
-
-    // Form Submit to WhatsApp Handler
-    if (contactForm) {
-        contactForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            const name = document.getElementById('nameInput')?.value.trim() || '';
-            const phone = document.getElementById('phoneInput')?.value.trim() || '';
-            const district = document.getElementById('districtInput')?.value || '';
-            const service = document.getElementById('serviceInput')?.value || '';
-            const locationUrl = document.getElementById('locationUrlInput')?.value || '';
-            const notes = document.getElementById('messageInput')?.value.trim() || '';
-
-            const submitBtn = document.getElementById('submitBtn');
-            const originalBtnText = submitBtn.innerHTML;
-            
+    // Contact form to WhatsApp.
+    const contactForm = $('#contactForm');
+    contactForm?.addEventListener('submit', event => {
+        event.preventDefault();
+        const value = id => document.getElementById(id)?.value.trim() || '';
+        const name = value('nameInput');
+        const phone = value('phoneInput');
+        const district = value('districtInput');
+        const service = value('serviceInput');
+        const location = value('locationUrlInput');
+        const notes = value('messageInput');
+        if (!name || !phone || !district || !service) {
+            showToast('يرجى إكمال البيانات المطلوبة أولًا');
+            contactForm.querySelector(':invalid')?.focus();
+            return;
+        }
+        const submitBtn = $('#submitBtn');
+        const originalHtml = submitBtn?.innerHTML || '';
+        if (submitBtn) {
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>جاري تجهيز محادثة الواتساب...</span>';
-
-            // Construct WhatsApp Formatted Message
-            let waText = `السلام عليكم، أرغب في طلب خدمة صرف صحي بمكة المكرمة:\n\n`;
-            waText += `👤 *الاسم:* ${name}\n`;
-            waText += `📱 *رقم الجوال:* ${phone}\n`;
-            waText += `📍 *الحي في مكة:* ${district}\n`;
-            waText += `🔧 *الخدمة المطلوبة:* ${service}\n`;
-            if (locationUrl) {
-                waText += `🗺️ *رابط الموقع الجغرافي (GPS):* ${locationUrl}\n`;
-            } else {
-                waText += `🗺️ *الموقع:* (لم يتم التقاط رابط GPS تلقائي)\n`;
-            }
-            if (notes) {
-                waText += `📝 *ملاحظات إضافية:* ${notes}\n`;
-            }
-
-            const encodedText = encodeURIComponent(waText);
-            const waTargetUrl = `https://wa.me/966533255939?text=${encodedText}`;
-
-            setTimeout(() => {
-                showToast('جاري توجيهك فوراً لمحادثة الواتساب المباشرة مع الفني...');
-                window.open(waTargetUrl, '_blank');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalBtnText;
-            }, 800);
-        });
-    }
-
-    // 8. FAQ Accordion Toggle
-    const faqItems = document.querySelectorAll('.faq-item');
-    faqItems.forEach(item => {
-        const questionBtn = item.querySelector('.faq-question');
-        if (questionBtn) {
-            questionBtn.addEventListener('click', () => {
-                const isActive = item.classList.contains('active');
-                
-                // Close all items
-                faqItems.forEach(otherItem => {
-                    otherItem.classList.remove('active');
-                    const otherBtn = otherItem.querySelector('.faq-question');
-                    if (otherBtn) otherBtn.setAttribute('aria-expanded', 'false');
-                });
-
-                // Toggle target item
-                if (!isActive) {
-                    item.classList.add('active');
-                    questionBtn.setAttribute('aria-expanded', 'true');
-                }
-            });
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>جاري تجهيز الواتساب...</span>';
+        }
+        const message = [
+            'السلام عليكم، أرغب في طلب خدمة صرف صحي بمكة المكرمة:', '',
+            `الاسم: ${name}`, `رقم الجوال: ${phone}`, `الحي في مكة: ${district}`, `الخدمة المطلوبة: ${service}`,
+            `الموقع: ${location || 'لم يتم التقاط رابط GPS تلقائي'}`, notes ? `ملاحظات إضافية: ${notes}` : ''
+        ].filter(Boolean).join('\n');
+        const url = `https://wa.me/966533255939?text=${encodeURIComponent(message)}`;
+        showToast('جاري فتح محادثة الواتساب...');
+        window.open(url, '_blank', 'noopener');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalHtml;
         }
     });
 
-    // 9. Realistic Live Social Proof Dispatch Ticker Rotation
-    const tickerWidget = document.getElementById('liveDispatchTicker');
-    const tickerText = document.getElementById('tickerText');
-    const tickerCloseBtn = document.getElementById('tickerCloseBtn');
+    // FAQ accordion: one open panel, keyboard-friendly ARIA state.
+    const faqItems = $$('.faq-item');
+    faqItems.forEach(item => {
+        const question = $('.faq-question', item);
+        if (!question) return;
+        question.setAttribute('aria-expanded', String(item.classList.contains('active')));
+        question.addEventListener('click', () => {
+            const shouldOpen = !item.classList.contains('active');
+            faqItems.forEach(other => {
+                other.classList.remove('active');
+                $('.faq-question', other)?.setAttribute('aria-expanded', 'false');
+            });
+            item.classList.toggle('active', shouldOpen);
+            question.setAttribute('aria-expanded', String(shouldOpen));
+        });
+    });
 
+    // Live dispatch ticker with clean timer lifecycle.
+    const tickerWidget = $('#liveDispatchTicker');
+    const tickerText = $('#tickerText');
+    const tickerCloseBtn = $('#tickerCloseBtn');
     if (tickerWidget && tickerText) {
-        const dispatchAlerts = [
+        const alerts = [
             'تم توجيه وايت شفط إلى حي الشرائع مخطط 4 (منذ 5 دقائق)',
             'طاقم فني يتواجد الآن في حي الشوقية لفك انسداد مجاري',
             'تم سحب بيارة رئيسية في حي العزيزية بنجاح (منذ 12 دقيقة)',
             'تريلة شفط سعة كبيرة في الطريق إلى مخطط ولي العهد',
             'تم غسيل وتطهير مانهول بالضغط العالي في حي العوالي'
         ];
-
-        let alertIndex = 0;
-        let tickerTimer = null;
-        let isClosedByUser = false;
-
-        const VISIBLE_DURATION = 8000;  // 8 ثواني ظهور
-        const HIDDEN_DURATION = 15000;  // 15 ثانية اختفاء
-
-        function showNotification() {
-            if (isClosedByUser) return;
-
-            // ضبط النص وإظهار التنبيه
-            tickerText.textContent = dispatchAlerts[alertIndex];
+        let index = 0;
+        let timer;
+        let closed = false;
+        const cycle = () => {
+            if (closed) return;
+            tickerText.textContent = alerts[index];
             tickerWidget.classList.remove('hidden');
-
-            // جدولة الاختفاء بعد 8 ثواني
-            tickerTimer = setTimeout(() => {
-                hideNotification();
-            }, VISIBLE_DURATION);
-        }
-
-        function hideNotification() {
-            if (isClosedByUser) return;
-
-            // إخفاء التنبيه
-            tickerWidget.classList.add('hidden');
-
-            // الانقال للتنبيه التالي
-            alertIndex = (alertIndex + 1) % dispatchAlerts.length;
-
-            // جدولة الظهور التالي بعد 15 ثانية اختفاء
-            tickerTimer = setTimeout(() => {
-                showNotification();
-            }, HIDDEN_DURATION);
-        }
-
-        // البدء بعد 3 ثواني من فتح الصفحة
-        tickerTimer = setTimeout(showNotification, 3000);
-
-        if (tickerCloseBtn) {
-            tickerCloseBtn.addEventListener('click', () => {
-                isClosedByUser = true;
-                if (tickerTimer) clearTimeout(tickerTimer);
+            timer = setTimeout(() => {
                 tickerWidget.classList.add('hidden');
-            });
-        }
+                index = (index + 1) % alerts.length;
+                timer = setTimeout(cycle, 15000);
+            }, 8000);
+        };
+        timer = setTimeout(cycle, 3000);
+        tickerCloseBtn?.addEventListener('click', () => {
+            closed = true;
+            clearTimeout(timer);
+            tickerWidget.classList.add('hidden');
+        });
     }
 });
-
-
