@@ -2302,3 +2302,152 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 /* Portfolio filter transition state */
 .portfolio-item { transition: opacity .24s ease, transform .24s ease, visibility .24s ease; }
 .portfolio-item.is-filtered-out { opacity: 0; transform: scale(.96); pointer-events: none; }
+
+/* ======================================================================
+   Final responsive hardening and accessibility polish
+   ====================================================================== */
+:root {
+    --bg-section-light: #172235;
+    --content-gutter: clamp(1rem, 3vw, 1.5rem);
+}
+
+html,
+body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+}
+
+body.menu-open,
+body.modal-open {
+    overflow: hidden;
+}
+
+.container {
+    width: min(100%, 1200px);
+    padding-inline: var(--content-gutter);
+}
+
+.navbar {
+    min-height: 72px;
+    padding-top: max(0.65rem, env(safe-area-inset-top));
+}
+
+.nav-container,
+.brand,
+.nav-actions,
+.nav-menu,
+.nav-list,
+.hero-content,
+.hero-visual,
+.brand-text {
+    min-width: 0;
+}
+
+.brand { flex: 1 1 auto; }
+.brand-title,
+.brand-sub { overflow: hidden; text-overflow: ellipsis; }
+
+.mobile-toggle {
+    position: relative;
+    z-index: 1001;
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-menu { z-index: 999; }
+.mobile-overlay { z-index: 998; }
+.btn, button, a { -webkit-tap-highlight-color: transparent; }
+.btn:active, button:active, .float-btn:active { transform: scale(0.97); }
+
+.form-group input,
+.form-group textarea,
+.form-select,
+button,
+.btn { max-width: 100%; }
+
+.form-group textarea { resize: vertical; min-height: 120px; }
+.districts-section,
+.faq-section,
+.reviews-section { isolation: isolate; }
+.district-card,
+.faq-item,
+.review-card,
+.info-card,
+.contact-form-panel { min-width: 0; }
+.faq-question span,
+.faq-answer p,
+.district-card p,
+.review-text { overflow-wrap: anywhere; }
+
+.faq-question:focus-visible,
+.nav-link:focus-visible,
+.btn:focus-visible,
+.mobile-toggle:focus-visible,
+.lightbox-close:focus-visible,
+.district-link:focus-visible {
+    outline: 3px solid var(--brand-cyan);
+    outline-offset: 3px;
+}
+
+.live-dispatch-ticker { max-width: min(460px, calc(100vw - 2rem)); }
+
+@media (max-width: 768px) {
+    .nav-container { gap: 0.5rem; }
+    .nav-actions { flex: 0 0 auto; gap: 0.35rem; }
+    .nav-menu {
+        width: min(300px, 86vw);
+        padding: 5.5rem 1.25rem 2rem;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+    .nav-list { align-items: stretch; }
+    .nav-link { display: block; padding: 0.7rem 0.25rem; }
+    .hero-section { padding-top: 7rem; }
+    .hero-trust-bar { justify-content: center; }
+    .hero-stats { width: 100%; }
+    .contact-form-panel,
+    .features-box { padding-inline: 1rem; }
+    .live-dispatch-ticker {
+        right: 1rem;
+        left: 1rem;
+        bottom: 1rem;
+        max-width: none;
+    }
+}
+
+@media (max-width: 576px) {
+    .container { padding-inline: 1rem; }
+    .section-header { max-width: 100%; }
+    .hero-title {
+        font-size: clamp(1.55rem, 7vw, 1.95rem);
+        overflow-wrap: anywhere;
+    }
+    .hero-subtitle { font-size: 1rem; }
+    .floating-actions { left: auto; }
+    .ba-slider-container { height: clamp(220px, 62vw, 300px); }
+    .lightbox-modal { padding: 1rem; }
+    .lightbox-content img { max-height: 62vh; }
+    .toast {
+        width: calc(100vw - 2rem);
+        justify-content: center;
+        text-align: center;
+        border-radius: var(--radius-md);
+    }
+}
+
+@media (max-width: 380px) {
+    .brand-icon { width: 38px; height: 38px; font-size: 1.15rem; }
+    .brand-title { font-size: 0.82rem; }
+    .brand-sub { font-size: 0.68rem; }
+    .btn-call-header { width: 36px; height: 36px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ambient-glow,
+    .glow-pulse,
+    .pulse-glow { animation: none; }
+}

@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const navMenu = $('#navMenu');
     const mobileOverlay = $('#mobileOverlay');
     const navLinks = $$('.nav-link');
+    mobileToggle?.setAttribute('aria-controls', 'navMenu');
+    navMenu?.setAttribute('aria-hidden', 'true');
 
     const setMenuState = (open) => {
         if (!navMenu || !mobileOverlay || !mobileToggle) return;
@@ -17,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.toggle('menu-open', open);
         mobileToggle.setAttribute('aria-expanded', String(open));
         mobileToggle.setAttribute('aria-label', open ? 'إغلاق القائمة' : 'فتح القائمة');
+        navMenu.setAttribute('aria-hidden', String(!open));
         mobileToggle.innerHTML = open
             ? '<i class="fa-solid fa-xmark" aria-hidden="true"></i>'
             : '<i class="fa-solid fa-bars" aria-hidden="true"></i>';
@@ -134,19 +137,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const lightboxImg = $('#lightboxImg');
     const lightboxCaption = $('#lightboxCaption');
     const lightboxClose = $('#lightboxClose');
+    let lastLightboxTrigger = null;
     const closeLightbox = () => {
         if (!lightboxModal) return;
         lightboxModal.classList.remove('active');
         document.body.classList.remove('modal-open');
         lightboxImg?.removeAttribute('src');
+        lastLightboxTrigger?.focus({ preventScroll: true });
+        lastLightboxTrigger = null;
     };
     $$('.btn-zoom-img').forEach(button => button.addEventListener('click', () => {
         if (!lightboxModal || !lightboxImg) return;
         lightboxImg.src = button.dataset.img || '';
         lightboxImg.alt = button.dataset.title || 'صورة من أعمالنا';
         if (lightboxCaption) lightboxCaption.textContent = button.dataset.title || '';
+        lastLightboxTrigger = button;
         lightboxModal.classList.add('active');
         document.body.classList.add('modal-open');
+        lightboxClose?.focus({ preventScroll: true });
     }));
     lightboxClose?.addEventListener('click', closeLightbox);
     lightboxModal?.addEventListener('click', event => {
@@ -260,22 +268,38 @@ document.addEventListener('DOMContentLoaded', () => {
             'تم غسيل وتطهير مانهول بالضغط العالي في حي العوالي'
         ];
         let index = 0;
-        let timer;
+        let timer = null;
         let closed = false;
+        let paused = document.hidden;
+        const clearTickerTimer = () => {
+            if (timer) {
+                clearTimeout(timer);
+                timer = null;
+            }
+        };
+        const scheduleCycle = delay => {
+            clearTickerTimer();
+            if (!closed && !paused) timer = setTimeout(cycle, delay);
+        };
         const cycle = () => {
-            if (closed) return;
+            if (closed || paused) return;
             tickerText.textContent = alerts[index];
             tickerWidget.classList.remove('hidden');
             timer = setTimeout(() => {
                 tickerWidget.classList.add('hidden');
                 index = (index + 1) % alerts.length;
-                timer = setTimeout(cycle, 15000);
+                scheduleCycle(15000);
             }, 8000);
         };
-        timer = setTimeout(cycle, 3000);
+        scheduleCycle(3000);
+        document.addEventListener('visibilitychange', () => {
+            paused = document.hidden;
+            if (paused) clearTickerTimer();
+            else if (!closed) scheduleCycle(1000);
+        });
         tickerCloseBtn?.addEventListener('click', () => {
             closed = true;
-            clearTimeout(timer);
+            clearTickerTimer();
             tickerWidget.classList.add('hidden');
         });
     }
