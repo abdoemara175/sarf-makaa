@@ -2825,3 +2825,12 @@ section:not(.hero-section) {
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
 }
+
+/* Final visibility lock: hamburger only on phone-sized viewports */
+@media (min-width: 769px) {
+    .mobile-toggle { display: none !important; visibility: hidden !important; }
+}
+
+@media (max-width: 768px) {
+    .mobile-toggle { display: inline-flex !important; visibility: visible !important; }
+}
