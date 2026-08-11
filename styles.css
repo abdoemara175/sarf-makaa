@@ -1677,3 +1677,105 @@ img {
         font-size: 1.6rem;
     }
 }
+
+
+/* Mobile viewport containment: prevent horizontal gaps/scroll while preserving vertical scrolling */
+html,
+body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+}
+
+body {
+    min-width: 0;
+}
+
+main,
+section,
+header,
+footer,
+.container {
+    max-width: 100%;
+}
+
+img,
+video,
+svg,
+iframe {
+    max-width: 100%;
+}
+
+@media (max-width: 768px) {
+    .container {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .hero-container,
+    .contact-wrapper,
+    .footer-container,
+    .services-grid,
+    .portfolio-grid,
+    .features-box {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .hero-content,
+    .hero-visual,
+    .hero-stats,
+    .contact-info-panel,
+    .contact-form-panel,
+    .features-box,
+    .ba-slider-container {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .hero-title,
+    .hero-subtitle,
+    .section-title,
+    .section-desc,
+    .card-title,
+    .card-text,
+    .info-body,
+    .footer-col {
+        overflow-wrap: anywhere;
+    }
+
+    .nav-menu {
+        max-width: min(280px, 85vw);
+    }
+}
+
+@media (max-width: 576px) {
+    .container {
+        padding-inline: 0.75rem;
+    }
+
+    .hero-section,
+    .services-section,
+    .portfolio-section,
+    .before-after-section,
+    .features-section,
+    .contact-section,
+    .footer {
+        overflow-x: clip;
+    }
+
+    .hero-cta-group .btn,
+    .btn-lg {
+        max-width: 100%;
+        white-space: normal;
+        text-align: center;
+    }
+
+    .hero-stats {
+        width: 100%;
+    }
+
+    .ba-slider-container {
+        width: 100%;
+    }
+}
