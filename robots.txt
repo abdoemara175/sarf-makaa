@@ -18,6 +18,6 @@ User-agent: Google-Extended
 Allow: /
 
 # Sitemap & LLM Knowledge Graph References
-Sitemap: https://sewage-makkah.com/sitemap.xml
-Link: https://sewage-makkah.com/llms.txt
-Link: https://sewage-makkah.com/llms-full.txt
+Sitemap: https://abomennah.com/sitemap.xml
+Link: https://abomennah.com/llms.txt
+Link: https://abomennah.com/llms-full.txt
