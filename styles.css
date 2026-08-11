@@ -2834,3 +2834,24 @@ section:not(.hero-section) {
 @media (max-width: 768px) {
     .mobile-toggle { display: inline-flex !important; visibility: visible !important; }
 }
+
+/* Final floating action placement: left side on every viewport */
+.floating-actions {
+    left: max(0.75rem, env(safe-area-inset-left)) !important;
+    right: auto !important;
+    bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+}
+
+.float-tooltip {
+    left: 70px !important;
+    right: auto !important;
+}
+
+@media (max-width: 480px) {
+    .floating-actions {
+        left: max(0.75rem, env(safe-area-inset-left)) !important;
+        right: auto !important;
+        bottom: max(0.75rem, env(safe-area-inset-bottom)) !important;
+    }
+    .float-tooltip { display: none; }
+}
