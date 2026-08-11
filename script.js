@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         revealElements.forEach(element => element.classList.add('reveal-active'));
     }
 
-    // Animated counters.
+    // Animated counters: start on load so the values never remain at +0/0%.
     const counterElements = $$('.counter');
     let countersStarted = false;
     const startCounters = () => {
@@ -95,12 +95,11 @@ document.addEventListener('DOMContentLoaded', () => {
             requestAnimationFrame(render);
         });
     };
-    const heroStats = $('.hero-stats');
-    if (heroStats && 'IntersectionObserver' in window) {
-        new IntersectionObserver(entries => {
-            if (entries[0]?.isIntersecting) startCounters();
-        }, { threshold: 0.35, once: true }).observe(heroStats);
-    } else if (heroStats) startCounters();
+    // Do not depend on a partial hero-stats intersection: different viewport
+    // heights otherwise leave the counters at their HTML fallback values.
+    if (counterElements.length) {
+        requestAnimationFrame(startCounters);
+    }
 
     // Portfolio filtering; cancel stale timers so rapid taps never leave hidden cards visible.
     const filterBtns = $$('.filter-btn');
