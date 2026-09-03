@@ -1,6 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
+    // Google Ads conversion tracking for the new Website lead action.
+    const GOOGLE_ADS_CONVERSION_ID = 'AW-17868587143/62JUCOPm5uccEIeBtMhC';
+    const trackGoogleAdsLead = () => {
+        if (typeof window.gtag === 'function') {
+            window.gtag('event', 'conversion', { send_to: GOOGLE_ADS_CONVERSION_ID });
+        }
+    };
+
+    // Count direct phone and WhatsApp actions as lead conversions.
+    document.querySelectorAll('a[href^="tel:"], a[href*="wa.me"]').forEach((link) => {
+        link.addEventListener('click', trackGoogleAdsLead);
+    });
+
     const $ = (selector, parent = document) => parent.querySelector(selector);
     const $$ = (selector, parent = document) => [...parent.querySelectorAll(selector)];
 
@@ -230,6 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `الموقع: ${location || 'لم يتم التقاط رابط GPS تلقائي'}`, notes ? `ملاحظات إضافية: ${notes}` : ''
         ].filter(Boolean).join('\n');
         const url = `https://wa.me/966533255939?text=${encodeURIComponent(message)}`;
+        trackGoogleAdsLead();
         showToast('جاري فتح محادثة الواتساب...');
         window.open(url, '_blank', 'noopener');
         if (submitBtn) {
